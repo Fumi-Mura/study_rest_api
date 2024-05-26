@@ -1,0 +1,125 @@
+openapi: "3.0.3"
+
+info:
+  title: "sample api"
+  version: "1.0.0"
+  description: |
+    # features
+    - Get reviews
+    - Post reviews
+  # ライセンス権とか書く時
+  # termsOfService: "https://fumi_mura.com/terms/"
+servers:
+  - url: "http:localhost:{port}"
+    description: "local development"
+    variables:
+      port:
+          enum: ["3000", "8080"]
+          default: "3000"
+  # - url: その他にも環境あれば並列で記述
+paths:
+  "/message":
+    get:
+      summary: "sample api get operation" # 操作の概要説明
+      description: "sample api get operation" # 操作の詳細説明
+      tags: ["sample"]
+      # deprecated: false デフォルトがfalseで、trueだと廃止されたAPIに
+      parameters:
+        - name: sample # パラメータ名
+          in: path # パラメータがどこで定義されているか
+          required: true # 求めているパラメータが必須かどうか、デフォルトはfalse
+          schema: {type: string} # パラメータの型
+          example: "abcdefg"
+        - name: x-api-key
+          in: header
+          description: "request users identifier"
+          schema: {type: string}
+          example: "xxxx-xxxx-xxxx"
+      requestBody:
+        description: "content of description"
+        required: true # リクエストボディが必須かどうか、デフォルトはfalse
+        content:
+          application/json: # メディアタイプの指定
+            schema: # 型定義
+              type: object
+              properties:
+                score: { type: integer, example: 555 } # サンプルも記述可能
+                comment: { type: string, example: sample }
+      responses:
+        "200": # ステータスコード毎に定義する必要がある、json/yaml互換のためにダブルコートで囲む
+          description: "success operation"
+          content:
+            application/json:
+              schema:
+                  type: string
+                  example: "hello world!"
+        "400":
+          description: "client side error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code: {type: string}
+                  type: {type: string}
+                  message: {type: string}
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field: {type: string}
+                        code: {type: string}
+components:
+  schemas:
+    SampleInt: # データ型の定義
+      type: integer
+      minimum: 0
+      exclusiveMinimum: false # Minimumで設定した値を含むかどうか
+      maximum: 100
+      exclusiveMaximum: true
+    SampleString:
+      type: string
+      nullable: true # nullを許容するかどうか
+      minLength: 10
+      maxLength: 20
+    SampleBoolean:
+      type: boolean
+
+#
+- web APIとは
+  - 省略
+- API公開によるリスクと対策
+  - 質の低いAPIだと判断された場合は他API・サービスを使用されるので停止した方がいい。
+  - 単位時間あたりの利用制限
+
+# rest制約
+- 原則はいくつかあるが特に重要だと感じた点は
+  - 階層かして疎結合化
+  - state full/less
+    - イメージとしてはクッキーを保存みたいな？
+
+# 設計基本
+- URIの設計は色々ルールがある。
+  - 短い、小文字のみ、ハイフンで繋げる(キャメルとかはNG、アンダースコアはタイプライターで下線を引くためのもの？)
+  - プロジェクト独自のドメイン知識などは反映しない。
+- URI = URN+RNL
+  - 実際にはURI=URLで使用
+- リソースの特定方法(URIの名前付け)
+  - クエリパラメータ型、パスパラメータ型
+- レスポンスフォーマット
+  - 指定方法はいくつかあるが、リクエストヘッダーが最も適切。
+- データの内部構造
+  - 無駄を削って、書き方を統一する。一般的に言われること。
+- エラー表現
+  - サービス停止時は再開目処を返す。
+  - precogで使用しているAPIは特にこの辺書いてないので、自分が設計する際は入れたい。
+#
+- APIバージョン
+  - デメリット
+    - 複数バージョンを並列稼働させるため、管理が複雑になる。
+  - 1.2.3
+    - バージョン番号の役割をそれぞれ
+- セキュリティ
+  - XSS(クロスサイトスクリプティング)、CSRF(クロスサイトリクエストフォージェリ)：
+  - HTTP通信は制御。
